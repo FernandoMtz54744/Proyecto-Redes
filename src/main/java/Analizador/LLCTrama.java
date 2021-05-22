@@ -1,36 +1,87 @@
 package Analizador;
 
-//Martinez Martinez Fernando; Cortes Lopez Jaime Alejandro
-
+import java.io.IOException;
+import org.pcap4j.core.BpfProgram;
 import org.pcap4j.core.NotOpenException;
+import org.pcap4j.core.PcapAddress;
 import org.pcap4j.core.PcapHandle;
-import org.pcap4j.core.PcapHandle.TimestampPrecision;
 import org.pcap4j.core.PcapNativeException;
+import org.pcap4j.core.PcapNetworkInterface;
 import org.pcap4j.core.Pcaps;
+import org.pcap4j.util.NifSelector;
 
 @SuppressWarnings("javadoc")
-public class LLCFile {
+public class LLCTrama {
 
-    private static int COUNT = 32;
-    private static final String PCAP_FILE_KEY = LLCFile.class.getName() + ".pcapFile";
-    private static String PCAP_FILE = System.getProperty(PCAP_FILE_KEY, "paquetes3.pcap");
+    private static final String COUNT_KEY = IPTrama.class.getName() + ".count";
+  private static int COUNT = Integer.getInteger(COUNT_KEY, 5);
 
-    public void LLC() {}
+  private static final String READ_TIMEOUT_KEY = IPTrama.class.getName() + ".readTimeout";
+  private static final int READ_TIMEOUT = Integer.getInteger(READ_TIMEOUT_KEY, 10); // [ms]
 
-    public void getLLC_File(int numTramas, String FileRoute) throws PcapNativeException, NotOpenException {
+  private static final String SNAPLEN_KEY = IPTrama.class.getName() + ".snaplen";
+  private static final int SNAPLEN = Integer.getInteger(SNAPLEN_KEY, 65536); // [bytes]
+
+  private static final String BUFFER_SIZE_KEY = IPTrama.class.getName() + ".bufferSize";
+  private static final int BUFFER_SIZE = Integer.getInteger(BUFFER_SIZE_KEY, 1 * 1024 * 1024); // [bytes]
+
+  private static final String NIF_NAME_KEY = IPTrama.class.getName() + ".nifName";
+  private static final String NIF_NAME = System.getProperty(NIF_NAME_KEY);
+
+
+    public void LLCTrama() {}
+
+    public void getLLC(int numTramas) throws PcapNativeException, NotOpenException {
         COUNT = numTramas;
-        PCAP_FILE = FileRoute;
+        String filter = "";
         
-        PcapHandle handle;
-        try {
-            handle = Pcaps.openOffline(PCAP_FILE, TimestampPrecision.NANO);
-        } catch (PcapNativeException e) {
-            handle = Pcaps.openOffline(PCAP_FILE);
+        System.out.println("Seleccione la interfaz");
+        PcapNetworkInterface nif;
+        if (NIF_NAME != null) {
+            nif = Pcaps.getDevByName(NIF_NAME);
+        } else {
+            try {
+                nif = new NifSelector().selectNetworkInterface();
+            } catch (IOException e) {
+                System.out.println("Error interfaz: " + e.getMessage());
+                return;
+            }
+            if (nif == null) {
+                return;
+            }
         }
 
-        for (int i = 0; i < COUNT; i++) {
+        System.out.println(nif.getName() + " (" + nif.getDescription() + ")");
+
+        for (PcapAddress addr : nif.getAddresses()) {
+            if (addr.getAddress() != null) {
+                System.out.println("IP address: " + addr.getAddress());
+            }
+        }
+        System.out.println("");
+
+        PcapHandle handle
+                = new PcapHandle.Builder(nif.getName())
+                        .snaplen(SNAPLEN)
+                        .promiscuousMode(PcapNetworkInterface.PromiscuousMode.PROMISCUOUS)
+                        .timeoutMillis(READ_TIMEOUT)
+                        .bufferSize(BUFFER_SIZE)
+                        .build();
+
+        handle.setFilter(filter, BpfProgram.BpfCompileMode.OPTIMIZE);
+
+        int num = 0;
+        
+        
+        
+
+        while(true) {
             try {
                 byte[] packet = handle.getNextRawPacket();
+                
+            if (packet == null) {
+                continue;
+            } else {    
                 for (int j = 0; j < packet.length; j++) {
                     if (j % 16 == 0) {
                         System.out.println("");
@@ -148,13 +199,18 @@ public class LLCFile {
                         }
                     }
                     
+                    
                 }else{
                     System.out.println("Tipo: Ethernet");
 
                 }
                 
-                
-                
+                System.out.println("");
+                num++;
+                if (num >= COUNT) {
+                    break;
+                }
+            }
                 
             } catch (Exception e) {
                 System.out.println("Error al leer tramas: " + e.getMessage());

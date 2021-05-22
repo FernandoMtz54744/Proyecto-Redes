@@ -8,9 +8,7 @@ public class Main {
         mostrar_menu();
    
    }
-    
-
-    
+   
 public static void mostrar_menu() {
         Scanner lector = new Scanner(System.in);
         int opcion, numTramas;
@@ -31,15 +29,30 @@ public static void mostrar_menu() {
                 case 1:
                     switch(opc) {
                         case 1: //Ethernet
+                               EthernetTrama ethernet = new EthernetTrama();
+                                try {
+                                    ethernet.getEthernetTrama(numTramas);
+                                } catch (Exception e) {
+                                    System.out.println("Error al analizar Ethernet Trama");
+                                }                                  
                             break;
-                            
                         case 2: //LLC
-                                
+                                LLCTrama llcTrama = new LLCTrama();
+                                try {
+                                    llcTrama.getLLC(numTramas);
+                                } catch (Exception e) {
+                                    System.out.println("Error al analizar LLC Trama");
+                                }
                             break;
                             
                         case 3: //ARP
+                            ARPTrama arp = new ARPTrama();
+                                try {
+                                    arp.getARPTrama(numTramas);
+                                } catch (Exception e) {
+                                    System.out.println("Error al analizar ARP Trama");
+                                }
                             break;
-                            
                         case 4: //IP
                             IPTrama ip = new IPTrama();
                                 try {
@@ -60,26 +73,39 @@ public static void mostrar_menu() {
                     
                     switch(opc) {
                         case 1: //Ethernet
-                            
+                                EthernetFile ethernetFile = new EthernetFile();
+                                try {
+                                    ethernetFile.getEthernetFile(numTramas, FileRoute);
+                                } catch (Exception e) {
+                                    System.out.println("Error al analizar Ethernet File");
+                                }
                             break;
-                            
                         case 2: //LLC
                                 LLCFile llc = new LLCFile();
                                 try {
                                     llc.getLLC_File(numTramas, FileRoute);
                                 } catch (Exception e) {
-                                    System.out.println("Error al analizar ip");
+                                    System.out.println("Error al analizar LLC");
                                 }
                             break;
                             
                         case 3: //ARP
-                            
-                            break;
-                            
-                        case 4: //IP
-                            
-                            break;
+                               ARPFile arpFile = new ARPFile();
+                                try {
+                                   arpFile.getARPFile(numTramas, FileRoute);
+                                } catch (Exception e) {
+                                    System.out.println("Error al analizar ARP File" + e.getMessage());
+                                }                         
 
+                            break;
+                        case 4: //IP
+                            IPFile ipFile = new IPFile();
+                                try {
+                                   ipFile.getIPFIle(numTramas, FileRoute);
+                                } catch (Exception e) {
+                                    System.out.println("Error al analizar IP File" + e.getMessage());
+                                }
+                            break;
                     }
                 break;
             }
